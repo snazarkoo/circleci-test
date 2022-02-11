@@ -50,22 +50,22 @@ jobs:
           paths:
             - node_modules
 
-fake_lint:
-  docker: *docker
-  environment: *environment
+  fake_lint:
+    docker: *docker
+    environment: *environment
 
-  steps:
-    - checkout
-    - run: yarn workspaces info | head -n -1 > workspace_info.txt
-    - *restore_node_modules
-    - run:
-        name: "Say hello"
-        command: "echo Hello, World!"
+    steps:
+      - checkout
+      - run: yarn workspaces info | head -n -1 > workspace_info.txt
+      - *restore_node_modules
+      - run:
+          name: "Say hello"
+          command: "echo Hello, Linter!"
 
 workflows:
   build_and_test:
     jobs:
       - setup
-      - yarn_lint:
+      - fake_lint:
           requires:
             - setup
