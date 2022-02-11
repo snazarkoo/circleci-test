@@ -1,0 +1,14 @@
+
+# Node
+node_modules
+*.log
+.nvm
+.eslintcache
+/bots/node_modules/
+package-lock.json
+
+# yarn
+yarn-error.log
+yarn-debug.log
+
+DS_Store
