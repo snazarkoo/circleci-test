@@ -49,6 +49,7 @@ jobs:
           key: v2-node-{{ arch }}-{{ .Branch }}-{{ checksum "yarn.lock" }}-{{ checksum "workspace_info.txt" }}-node-modules
           paths:
             - node_modules
+            - packages/*/node_modules
 
   fake_lint:
     docker: *docker
