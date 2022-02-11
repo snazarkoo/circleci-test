@@ -1,0 +1,71 @@
+version: 2.1
+
+aliases:
+  - &docker
+    - image: cimg/openjdk:17.0.0-node
+
+  - &environment
+    TZ: /usr/share/zoneinfo/America/Los_Angeles
+
+  - &restore_yarn_cache
+    restore_cache:
+      name: Restore yarn cache
+      key: v2-node-{{ arch }}-{{ checksum "yarn.lock" }}-yarn
+
+  - &restore_node_modules
+    restore_cache:
+      name: Restore node_modules cache
+      keys:
+        - v2-node-{{ arch }}-{{ .Branch }}-{{ checksum "yarn.lock" }}-{{ checksum "workspace_info.txt" }}-node-modules
+
+jobs:
+  setup:
+    docker: *docker
+    environment: *environment
+    steps:
+      - checkout
+      - run:
+          name: Nodejs Version
+          command: node --version
+      - *restore_yarn_cache
+      - run:
+          name: Install Packages
+          command: yarn --frozen-lockfile --cache-folder ~/.cache/yarn
+      - run: yarn workspaces info | head -n -1 > workspace_info.txt
+      - save_cache:
+          # Store the yarn cache globally for all lock files with this same
+          # checksum. This will speed up the setup job for all PRs where the
+          # lockfile is the same.
+          name: Save yarn cache for future installs
+          key: v2-node-{{ arch }}-{{ checksum "yarn.lock" }}-yarn
+          paths:
+            - ~/.cache/yarn
+      - save_cache:
+          # Store node_modules for all jobs in this workflow so that they don't
+          # need to each run a yarn install for each job. This will speed up
+          # all jobs run on this branch with the same lockfile.
+          name: Save node_modules cache
+          # This cache key is per branch, a yarn install in setup is required.
+          key: v2-node-{{ arch }}-{{ .Branch }}-{{ checksum "yarn.lock" }}-{{ checksum "workspace_info.txt" }}-node-modules
+          paths:
+            - node_modules
+
+fake_lint:
+  docker: *docker
+  environment: *environment
+
+  steps:
+    - checkout
+    - run: yarn workspaces info | head -n -1 > workspace_info.txt
+    - *restore_node_modules
+    - run:
+        name: "Say hello"
+        command: "echo Hello, World!"
+
+workflows:
+  build_and_test:
+    jobs:
+      - setup
+      - yarn_lint:
+          requires:
+            - setup
